@@ -28,6 +28,8 @@ class NotificationPresenter {
 
   std::set<Notification*> notifications() const { return notifications_; }
 
+  base::WeakPtr<Notification> last_notification() { return last_notification_; }
+
  protected:
   NotificationPresenter();
   virtual Notification* CreateNotificationObject(
@@ -39,6 +41,8 @@ class NotificationPresenter {
   void RemoveNotification(Notification* notification);
 
   std::set<Notification*> notifications_;
+
+  base::WeakPtr<Notification> last_notification_;
 
   DISALLOW_COPY_AND_ASSIGN(NotificationPresenter);
 };

@@ -86,6 +86,12 @@ void PlatformNotificationService::DisplayNotification(
   auto* presenter = browser_client_->GetNotificationPresenter();
   if (!presenter)
     return;
+
+  // Ensure the last notification is removed before presenting a new one.
+  auto last_notification = presenter->last_notification();
+  if (last_notification)
+    last_notification->Dismiss();
+
   NotificationDelegateImpl* delegate =
       new NotificationDelegateImpl(notification_id);
   auto notification = presenter->CreateNotification(delegate, notification_id);

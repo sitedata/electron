@@ -23,7 +23,9 @@ base::WeakPtr<Notification> NotificationPresenter::CreateNotification(
   Notification* notification = CreateNotificationObject(delegate);
   notification->set_notification_id(notification_id);
   notifications_.insert(notification);
-  return notification->GetWeakPtr();
+
+  last_notification_ = notification->GetWeakPtr();
+  return last_notification_;
 }
 
 void NotificationPresenter::RemoveNotification(Notification* notification) {
