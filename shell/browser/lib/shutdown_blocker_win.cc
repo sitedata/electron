@@ -41,7 +41,7 @@ void ShutdownBlockerWin::BlockShutdown() {
   if (dedicated_message_loop_) {
     LOG(INFO) << "unblocking shutdown on renderer process";
     owner_thread_task_runner_ = base::ThreadTaskRunnerHandle::Get();
-    base::PostTask(FROM_HERE, {content::BrowserThread::UI},
+    base::PostTask(FROM_HERE, {content::BrowserThread::IO},
                    base::BindOnce(&ShutdownBlockerWin::MessageLoop,
                                   base::Unretained(this)));
   } else {
