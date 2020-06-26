@@ -21,18 +21,11 @@ describe('debugger module', () => {
   afterEach(closeAllWindows);
 
   describe('debugger.attach', () => {
-    it('succeeds when devtools is already open', done => {
-      w.webContents.on('did-finish-load', () => {
-        w.webContents.openDevTools();
-        try {
-          w.webContents.debugger.attach();
-        } catch (err) {
-          done(`unexpected error : ${err}`);
-        }
-        expect(w.webContents.debugger.isAttached()).to.be.true();
-        done();
-      });
-      w.webContents.loadURL('about:blank');
+    it('succeeds when devtools is already open', async () => {
+      await w.webContents.loadURL('about:blank');
+      w.webContents.openDevTools();
+      w.webContents.debugger.attach();
+      expect(w.webContents.debugger.isAttached()).to.be.true();
     });
 
     it('fails when protocol version is not supported', done => {
@@ -44,23 +37,22 @@ describe('debugger module', () => {
       }
     });
 
-    it('attaches when no protocol version is specified', done => {
-      try {
-        w.webContents.debugger.attach();
-      } catch (err) {
-        done(`unexpected error : ${err}`);
-      }
+    it('attaches when no protocol version is specified', async () => {
+      w.webContents.debugger.attach();
       expect(w.webContents.debugger.isAttached()).to.be.true();
-      done();
     });
   });
 
   describe('debugger.detach', () => {
     it('fires detach event', (done) => {
       w.webContents.debugger.on('detach', (e, reason) => {
-        expect(reason).to.equal('target closed');
-        expect(w.webContents.debugger.isAttached()).to.be.false();
-        done();
+        try {
+          expect(reason).to.equal('target closed');
+          expect(w.webContents.debugger.isAttached()).to.be.false();
+          done();
+        } catch (e) {
+          done(e);
+        }
       });
 
       try {
@@ -83,9 +75,13 @@ describe('debugger module', () => {
         w.webContents.debugger.detach();
       });
       w.webContents.debugger.on('detach', () => {
-        expect(w.webContents.debugger.isAttached()).to.be.false();
-        expect((w as any).devToolsWebContents.isDestroyed()).to.be.false();
-        done();
+        try {
+          expect(w.webContents.debugger.isAttached()).to.be.false();
+          expect((w as any).devToolsWebContents.isDestroyed()).to.be.false();
+          done();
+        } catch (e) {
+          done(e);
+        }
       });
     });
   });

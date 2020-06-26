@@ -8,6 +8,7 @@ const ChildProcess = require('child_process');
 const { ipcRenderer } = require('electron');
 const { emittedOnce } = require('./events-helpers');
 const { resolveGetters } = require('./expect-helpers');
+const { ifdescribe } = require('./spec-helpers');
 const features = process._linkedBinding('electron_common_features');
 
 /* Most of the APIs here don't use standard callbacks */
@@ -46,21 +47,11 @@ describe('chromium feature', () => {
     });
   });
 
-  describe('navigator.geolocation', () => {
-    before(function () {
-      if (!features.isFakeLocationProviderEnabled()) {
-        return this.skip();
-      }
-    });
-
-    it('returns position when permission is granted', (done) => {
-      navigator.geolocation.getCurrentPosition((position) => {
-        expect(position).to.have.a.property('coords');
-        expect(position).to.have.a.property('timestamp');
-        done();
-      }, (error) => {
-        done(error);
-      });
+  ifdescribe(features.isFakeLocationProviderEnabled())('navigator.geolocation', () => {
+    it('returns position when permission is granted', async () => {
+      const position = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject));
+      expect(position).to.have.a.property('coords');
+      expect(position).to.have.a.property('timestamp');
     });
   });
 
@@ -68,9 +59,14 @@ describe('chromium feature', () => {
     it('accepts "nodeIntegration" as feature', (done) => {
       let b = null;
       listener = (event) => {
-        expect(event.data.isProcessGlobalUndefined).to.be.true();
-        b.close();
-        done();
+        try {
+          expect(event.data.isProcessGlobalUndefined).to.be.true();
+          done();
+        } catch (e) {
+          done(e);
+        } finally {
+          b.close();
+        }
       };
       window.addEventListener('message', listener);
       b = window.open(`file://${fixtures}/pages/window-opener-node.html`, '', 'nodeIntegration=no,show=no');
@@ -81,9 +77,14 @@ describe('chromium feature', () => {
       listener = (event) => {
         const width = outerWidth;
         const height = outerHeight;
-        expect(event.data).to.equal(`size: ${width} ${height}`);
-        b.close();
-        done();
+        try {
+          expect(event.data).to.equal(`size: ${width} ${height}`);
+          done();
+        } catch (e) {
+          done(e);
+        } finally {
+          b.close();
+        }
       };
       window.addEventListener('message', listener);
       b = window.open(`file://${fixtures}/pages/window-open-size.html`, '', 'show=no');
@@ -92,9 +93,14 @@ describe('chromium feature', () => {
     it('disables node integration when it is disabled on the parent window', (done) => {
       let b = null;
       listener = (event) => {
-        expect(event.data.isProcessGlobalUndefined).to.be.true();
-        b.close();
-        done();
+        try {
+          expect(event.data.isProcessGlobalUndefined).to.be.true();
+          done();
+        } catch (e) {
+          done(e);
+        } finally {
+          b.close();
+        }
       };
       window.addEventListener('message', listener);
 
@@ -112,9 +118,14 @@ describe('chromium feature', () => {
     it('disables the <webview> tag when it is disabled on the parent window', (done) => {
       let b = null;
       listener = (event) => {
-        expect(event.data.isWebViewGlobalUndefined).to.be.true();
-        b.close();
-        done();
+        try {
+          expect(event.data.isWebViewGlobalUndefined).to.be.true();
+          done();
+        } catch (e) {
+          done(e);
+        } finally {
+          b.close();
+        }
       };
       window.addEventListener('message', listener);
 
@@ -136,9 +147,14 @@ describe('chromium feature', () => {
         height: 450
       };
       listener = (event) => {
-        expect(event.data).to.equal(`size: ${size.width} ${size.height}`);
-        b.close();
-        done();
+        try {
+          expect(event.data).to.equal(`size: ${size.width} ${size.height}`);
+          done();
+        } catch (e) {
+          done(e);
+        } finally {
+          b.close();
+        }
       };
       window.addEventListener('message', listener);
       b = window.open(`file://${fixtures}/pages/window-open-size.html`, '', 'show=no,width=' + size.width + ',height=' + size.height);
@@ -167,9 +183,14 @@ describe('chromium feature', () => {
     it('is not null for window opened by window.open', (done) => {
       let b = null;
       listener = (event) => {
-        expect(event.data).to.equal('object');
-        b.close();
-        done();
+        try {
+          expect(event.data).to.equal('object');
+          done();
+        } catch (e) {
+          done(e);
+        } finally {
+          b.close();
+        }
       };
       window.addEventListener('message', listener);
       b = window.open(`file://${fixtures}/pages/window-opener.html`, '', 'show=no');
@@ -190,11 +211,15 @@ describe('chromium feature', () => {
     it('sets source and origin correctly', (done) => {
       let b = null;
       listener = (event) => {
-        window.removeEventListener('message', listener);
-        expect(event.source).to.deep.equal(b);
-        b.close();
-        expect(event.origin).to.equal('file://');
-        done();
+        try {
+          expect(event.source).to.deep.equal(b);
+          expect(event.origin).to.equal('file://');
+          done();
+        } catch (e) {
+          done(e);
+        } finally {
+          b.close();
+        }
       };
       window.addEventListener('message', listener);
       b = window.open(`file://${fixtures}/pages/window-opener-postMessage.html`, '', 'show=no');
@@ -204,8 +229,12 @@ describe('chromium feature', () => {
       const webview = new WebView();
       webview.addEventListener('console-message', (e) => {
         webview.remove();
-        expect(e.message).to.equal('message');
-        done();
+        try {
+          expect(e.message).to.equal('message');
+          done();
+        } catch (e) {
+          done(e);
+        }
       });
       webview.allowpopups = true;
       webview.src = url.format({
@@ -242,10 +271,14 @@ describe('chromium feature', () => {
       it('delivers messages that match the origin', (done) => {
         let b = null;
         listener = (event) => {
-          window.removeEventListener('message', listener);
-          b.close();
-          expect(event.data).to.equal('deliver');
-          done();
+          try {
+            expect(event.data).to.equal('deliver');
+            done();
+          } catch (e) {
+            done(e);
+          } finally {
+            b.close();
+          }
         };
         window.addEventListener('message', listener);
         b = window.open(serverURL, '', 'show=no');
@@ -277,9 +310,14 @@ describe('chromium feature', () => {
       const worker = new Worker('../fixtures/workers/worker.js');
       const message = 'ping';
       worker.onmessage = (event) => {
-        expect(event.data).to.equal(message);
-        worker.terminate();
-        done();
+        try {
+          expect(event.data).to.equal(message);
+          done();
+        } catch (e) {
+          done(e);
+        } finally {
+          worker.terminate();
+        }
       };
       worker.postMessage(message);
     });
@@ -287,18 +325,28 @@ describe('chromium feature', () => {
     it('Worker has no node integration by default', (done) => {
       const worker = new Worker('../fixtures/workers/worker_node.js');
       worker.onmessage = (event) => {
-        expect(event.data).to.equal('undefined undefined undefined undefined');
-        worker.terminate();
-        done();
+        try {
+          expect(event.data).to.equal('undefined undefined undefined undefined');
+          done();
+        } catch (e) {
+          done(e);
+        } finally {
+          worker.terminate();
+        }
       };
     });
 
     it('Worker has node integration with nodeIntegrationInWorker', (done) => {
       const webview = new WebView();
       webview.addEventListener('ipc-message', (e) => {
-        expect(e.channel).to.equal('object function object function');
-        webview.remove();
-        done();
+        try {
+          expect(e.channel).to.equal('object function object function');
+          done();
+        } catch (e) {
+          done(e);
+        } finally {
+          webview.remove();
+        }
       });
       webview.src = `file://${fixtures}/pages/worker.html`;
       webview.setAttribute('webpreferences', 'nodeIntegration, nodeIntegrationInWorker');
@@ -311,8 +359,12 @@ describe('chromium feature', () => {
         const worker = new SharedWorker('../fixtures/workers/shared_worker.js');
         const message = 'ping';
         worker.port.onmessage = (event) => {
-          expect(event.data).to.equal(message);
-          done();
+          try {
+            expect(event.data).to.equal(message);
+            done();
+          } catch (e) {
+            done(e);
+          }
         };
         worker.port.postMessage(message);
       });
@@ -320,8 +372,12 @@ describe('chromium feature', () => {
       it('has no node integration by default', (done) => {
         const worker = new SharedWorker('../fixtures/workers/shared_worker_node.js');
         worker.port.onmessage = (event) => {
-          expect(event.data).to.equal('undefined undefined undefined undefined');
-          done();
+          try {
+            expect(event.data).to.equal('undefined undefined undefined undefined');
+            done();
+          } catch (e) {
+            done(e);
+          }
         };
       });
 
@@ -331,9 +387,14 @@ describe('chromium feature', () => {
           console.log(e);
         });
         webview.addEventListener('ipc-message', (e) => {
-          expect(e.channel).to.equal('object function object function');
-          webview.remove();
-          done();
+          try {
+            expect(e.channel).to.equal('object function object function');
+            done();
+          } catch (e) {
+            done(e);
+          } finally {
+            webview.remove();
+          }
         });
         webview.src = `file://${fixtures}/pages/shared_worker.html`;
         webview.setAttribute('webpreferences', 'nodeIntegration, nodeIntegrationInWorker');
@@ -357,8 +418,12 @@ describe('chromium feature', () => {
       iframe.src = `file://${fixtures}/pages/set-global.html`;
       document.body.appendChild(iframe);
       iframe.onload = () => {
-        expect(iframe.contentWindow.test).to.equal('undefined undefined undefined');
-        done();
+        try {
+          expect(iframe.contentWindow.test).to.equal('undefined undefined undefined');
+          done();
+        } catch (e) {
+          done(e);
+        }
       };
     });
   });
@@ -385,9 +450,14 @@ describe('chromium feature', () => {
           // wherein calling `getItem` immediately after `setItem` would appear to work
           // but then later (e.g. next tick) it would not.
           setTimeout(() => {
-            expect(storage.getItem(testKeyName)).to.have.lengthOf(length);
-            storage.removeItem(testKeyName);
-            done();
+            try {
+              expect(storage.getItem(testKeyName)).to.have.lengthOf(length);
+              done();
+            } catch (e) {
+              done(e);
+            } finally {
+              storage.removeItem(testKeyName);
+            }
           }, 1);
         });
         it(`throws when attempting to use more than 128MiB in ${storageName}`, () => {
@@ -406,8 +476,12 @@ describe('chromium feature', () => {
 
     it('requesting persitent quota works', (done) => {
       navigator.webkitPersistentStorage.requestQuota(1024 * 1024, (grantedBytes) => {
-        expect(grantedBytes).to.equal(1048576);
-        done();
+        try {
+          expect(grantedBytes).to.equal(1048576);
+          done();
+        } catch (e) {
+          done(e);
+        }
       });
     });
   });
