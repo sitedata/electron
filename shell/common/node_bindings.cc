@@ -36,6 +36,7 @@
 #define ELECTRON_BUILTIN_MODULES(V)      \
   V(electron_browser_app)                \
   V(electron_browser_auto_updater)       \
+  V(electron_browser_base_window)        \
   V(electron_browser_browser_view)       \
   V(electron_browser_content_tracing)    \
   V(electron_browser_crash_reporter)     \
@@ -52,7 +53,6 @@
   V(electron_browser_protocol)           \
   V(electron_browser_session)            \
   V(electron_browser_system_preferences) \
-  V(electron_browser_top_level_window)   \
   V(electron_browser_tray)               \
   V(electron_browser_view)               \
   V(electron_browser_web_contents)       \

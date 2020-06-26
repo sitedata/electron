@@ -21,7 +21,7 @@ declare namespace Electron {
   }
 
   // Experimental views API
-  class TopLevelWindow {
+  class BaseWindow {
     constructor(args: {show: boolean})
     setContentView(view: View): void
   }
@@ -30,7 +30,7 @@ declare namespace Electron {
   }
 
   namespace Main {
-    class TopLevelWindow extends Electron.TopLevelWindow {}
+    class BaseWindow extends Electron.BaseWindow {}
     class View extends Electron.View {}
     class WebContentsView extends Electron.WebContentsView {}
   }
